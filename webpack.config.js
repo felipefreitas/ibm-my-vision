@@ -8,7 +8,7 @@ const bourbon = require('bourbon');
 module.exports = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     entry: {
-        index: './assets/js/index.js'
+        index: './assets/js/app-home.js'
     },
     output: {
         path: __dirname + "/builtAssets",
@@ -36,23 +36,10 @@ module.exports = {
                 }
             },
             {
-                test: /\.s?css$/,
+                test: /\.css$/,
                 use: [
                     ExtractTextPlugin.loader,
-                    'css-loader',
-                    'postcss-loader',
-                    {
-                        loader: 'sass-loader',
-                        options: {
-                            includePaths: [
-                                path.resolve(
-                                    __dirname,
-                                    'node_modules/purecss-sass/vendor/assets/stylesheets'
-                                ),
-                                bourbon.includePaths
-                            ]
-                        }
-                    }
+                    'css-loader'
                 ]
             },
             {
@@ -64,7 +51,7 @@ module.exports = {
         ]
     },
     plugins: [
-        new CopyWebpackPlugin([{ from: 'assets/img', to: 'img' }]),
+        new CopyWebpackPlugin([{ from: 'assets/images', to: 'images' }]),
         new CopyWebpackPlugin([{ from: 'assets/wasm', to: 'wasm' }]),
         new ExtractTextPlugin({
             filename: 'css/[name].css',

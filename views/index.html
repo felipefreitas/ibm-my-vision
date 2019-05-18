@@ -1,18 +1,92 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <link href="/assets/css/index.css" rel="stylesheet" />
-  </head>
-  <body>
-    <div class="container">
-      <div class="videoWrapper" id="videoWrapper">
-        <div class="fps" id="fps"></div>
-        <video muted="true"></video>
+<html lang=”en”>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Camera app">
+  <meta name="apple-mobile-web-app-title" content="Camera app">
+
+  <!-- Name of the app -->
+  <title>Camera App</title>
+
+  <!-- Link to site manifest -->
+  <link rel="manifest" href="site.webmanifest">
+
+  <!-- Links to icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="mask-icon" href="images/safari-pinned-tab.svg" color="#603cba">
+  <meta name="msapplication-TileColor" content="#603cba">
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Link to main style sheet -->
+  <link rel="stylesheet" href="/assets/css/index.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+  <!-- Code -->
+  <div class="card">
+    <div class="card-body">
+      <form>
+        <div class="form-group">
+          <label class="col-form-label">
+            Olá!<br />
+            Insira abaixo seu código fornecido pelo dashboard
+          </label>
+          <input type="number" class="form-control" id="room-id" maxlength="5"
+            oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);"
+            placeholder="Insira seu código aqui">
+        </div>
+      </form>
+      <div class="alert alert-danger" role="alert" hidden>
       </div>
-      <div class="log" id="log">
-      </div>
+
+      <a onclick="onCodeSubmit()" class="btn btn-outline-primary col text-center"
+        style="left: 30%;  width: 40%;">Continuar</a>
     </div>
-    <script src="/assets/js/index.js"></script>
-  </body>
+  </div>
+
+  <!-- Camera -->
+  <main id="camera">
+
+    <!-- Camera sensor -->
+    <canvas id="camera--sensor"></canvas>
+
+    <!-- Camera view -->
+    <video id="camera--view" autoplay playsinline muted="true"></video>
+
+    <!-- Camera trigger -->
+    <button class="button-float switch-camera">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path
+          d="M12 10H6.78A11 11 0 0 1 27 16h2A13 13 0 0 0 6 7.68V4H4v8h8zm8 12h5.22A11 11 0 0 1 5 16H3a13 13 0 0 0 23 8.32V28h2v-8h-8z" />
+      </svg>
+      <span class="sr-only">Click to switch camera</span>
+    </button>
+
+    <button class="button-float snapshot-camera" id="camera--trigger">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path
+          d="M29 26H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h6.46l1.71-2.55A1 1 0 0 1 12 4h8a1 1 0 0 1 .83.45L22.54 7H29a1 1 0 0 1 1 1v17a1 1 0 0 1-1 1zM4 24h24V9h-6a1 1 0 0 1-.83-.45L19.46 6h-6.92l-1.71 2.55A1 1 0 0 1 10 9H4z" />
+        <path d="M16 22a6 6 0 1 1 6-6 6 6 0 0 1-6 6zm0-10a4 4 0 1 0 4 4 4 4 0 0 0-4-4z" />
+      </svg>
+      <span class="sr-only">Click to snapshot camera</span>
+    </button>
+
+  </main>
+
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+  <!-- Reference to your JavaScript file -->
+  <script src="/assets/js/index.js"></script>
+
+</body>
+
 </html>
-  
