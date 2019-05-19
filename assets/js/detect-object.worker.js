@@ -62,29 +62,29 @@ function requestToAIVision(formData, code) {
     let request = new XMLHttpRequest();
     let url = AI_VISION_URL;
 
-    if(code){
+    if (code) {
         url = url + "?id=" + code
     }
 
-    request.open('POST', url, true);
-    request.onreadystatechange = (response) => {
-        if(request.readyState === XMLHttpRequest.DONE && request.status === 200) {
-			let objects = onSearchSuccess(response.body, code);
-            return objects;
-		}	
-    };
+    return new Promise((resolve, reject) => {
+        request.onreadystatechange = function () {
+            if (request.readyState !== 4) return;
 
-    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    request.send(formData);
-    // return axios({
-    //     method: 'POST',
-    //     url: AI_VISION_URL + "?id=" + code,
-    //     data: formData
-    // }).then(response => { return response.data; })
-    //     .then(result => {
-    //         let objects = onSearchSuccess(result, code);
-    //         return objects;
-    //     });
+            if (request.status >= 200 && request.status < 300) {
+                let objects = onSearchSuccess(response.body, code);
+                resolve(objects);
+            } else {
+                reject({
+                    status: request.status,
+                    statusText: request.statusText
+                });
+            }
+        };
+
+        request.open('POST', url, true);
+        request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        request.send(formData);
+    });
 };
 
 function onSearchSuccess(result, code) {

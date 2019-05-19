@@ -1,5 +1,5 @@
 {
-  "name": "opencvjs-wasm-webworker-webpack-demo",
+  "name": "ibm-my-vision",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -11,7 +11,7 @@
     "debug:watch": "webpack --config webpack.config.js --watch",
     "debug": "(node-dev app.js & npm run debug:watch)"
   },
-  "author": "mecab",
+  "author": "Felipe Freitas",
   "license": "MIT",
   "devDependencies": {
     "autoprefixer": "^9.0.0",
