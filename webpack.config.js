@@ -8,7 +8,7 @@ const bourbon = require('bourbon');
 module.exports = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     entry: {
-        index: './assets/js/app-home.js'
+        index: ['./assets/js/code-manager.js', './assets/js/app-home.js' ]
     },
     output: {
         path: __dirname + "/builtAssets",

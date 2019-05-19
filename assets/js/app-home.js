@@ -1,5 +1,7 @@
 require('../css/index.css');
 
+let code = null;
+
 const TrackerWorker = require('./tracker-object.worker');
 const DetectWorker = require('./detect-object.worker.js');
 
@@ -7,11 +9,7 @@ const CAMERA_VIEW_ID = 'camera--view';
 const CAMERA_OUTPUT_ID = 'camera--output';
 const CAMERA_SENSOR_ID = 'camera--sensor';
 const CAMERA_TRIGGER_ID = 'camera--trigger';
-const RECOGNITION_TIMESTAMP = 3000;
-const RECOGNITION_THRESHOLD = 0.980;
-const FPS = 20;
-const DASHBOARD_API_URL = '/publish';
-const AI_VISION_URL = '/classify';
+const FPS = 30;
 
 const cameraView = document.querySelector("#" + CAMERA_VIEW_ID);
 const cameraOutput = document.querySelector("#" + CAMERA_OUTPUT_ID);
@@ -27,36 +25,18 @@ window.requestAnimationFrame = window.requestAnimationFrame
 
 // Set constraints for the video stream
 var constraints = { video: { facingMode: "environment" }, audio: false };
-var track = null;
 
-let objectsTracked = [];
 let objectsRecognized = [];
-let canvas;
-let video;
-let frame;
-let matrix;
-let matrix_roi;
-let screen_roi;
-let terminationCriteria;
-let HSV;
-let HSVVector;
 let width;
 let height;
-let ROI_MAX = 0;
-let ROI_MIN = 0;
 let trackerWorker = null;
 let detectorWorker = null;
 
 function init() {
+  // let scale = PROCESSING_RESOLUTION_WIDTH / settings.width;
   width = cameraView.width = cameraSensor.width = cameraView.videoWidth;
   height = cameraView.height = cameraSensor.height = cameraView.videoHeight;
-  matrix = new cv.Mat(height, width, cv.CV_8UC4);
-  frame = new cv.VideoCapture(cameraView);
-  terminationCriteria = new cv.TermCriteria(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 1);
-  HSV = new cv.Mat(cameraView.height, cameraView.width, cv.CV_8UC3);
-  HSVVector = new cv.MatVector();
-  HSVVector.push_back(HSV);
-  
+
   initTrackerWorker();
   initDetectorWorker();
 };
@@ -73,10 +53,10 @@ function initTrackerWorker() {
         break;
       case 'tracker-processed':
         requestAnimationFrame(() => {
-          cv.imshow(CAMERA_SENSOR_ID, data.matrix);
+          let context = cameraSensor.getContext('2d');
+          context.putImageData(data.imageData, 0, 0);
         });
         trackerObjects();
-        trackerNewObjects();
         break;
       case 'tracker-new-objects-done':
         trackerNewObjects();
@@ -86,31 +66,44 @@ function initTrackerWorker() {
 };
 
 function initTrackerParameters() {
+  let ctx = cameraSensor.getContext('2d');
+
+  ctx.drawImage(cameraView, 0, 0, cameraSensor.width, cameraSensor.height);
+
+  let imageData = ctx.getImageData(0, 0, cameraSensor.width, cameraSensor.height);
   let parameters = {
-    frame,
-    matrix,
-    HSV,
-    HSVVector,
-    terminationCriteria
+    height,
+    width,
+    imageData
   };
 
-  trackerWorker.postMessage({ type: 'tracker-start', parameters });
+  trackerWorker.postMessage({ type: 'tracker-start', parameters }, [imageData.data.buffer]);
 };
 
 function trackerObjects() {
+  const ctx = cameraSensor.getContext('2d');
+
+  ctx.drawImage(cameraView, 0, 0, cameraSensor.width, cameraSensor.height);
+
+  const imageData = ctx.getImageData(0, 0, cameraSensor.width, cameraSensor.height);
+
   let parameters = {
-    matrix,
-    objectsTracked
+    imageData
   };
 
   trackerWorker.postMessage({ type: 'tracker-process', parameters });
 };
 
 function trackerNewObjects() {
+  const ctx = cameraSensor.getContext('2d');
+
+  ctx.drawImage(cameraView, 0, 0, cameraSensor.width, cameraSensor.height);
+
+  const imageData = ctx.getImageData(0, 0, cameraSensor.width, cameraSensor.height);
+
   let parameters = {
-    matrix,
-    objectsRecognized,
-    objectsTracked
+    imageData,
+    objectsRecognized
   };
 
   trackerWorker.postMessage({ type: 'tracker-new-objects', parameters });
@@ -165,24 +158,7 @@ cameraTrigger.onclick = function () {
   objectsTracked = [];
 };
 
-function loadUI(onloadCallback) {
-  window.addEventListener('load', () => {
-    if (cv.getBuildInformation) {
-      console.log(cv.getBuildInformation());
-      onloadCallback();
-    }
-    else {
-      cv['onRuntimeInitialized'] = () => {
-        console.log(cv.getBuildInformation());
-        onloadCallback();
-      }
-    }
-  });
-};
-
-loadUI(() => {
-  cameraStart();
-});
+cameraStart();
 
 // Install ServiceWorker
 if ('serviceWorker' in navigator) {

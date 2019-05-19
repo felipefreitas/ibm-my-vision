@@ -6,6 +6,7 @@ const staticServe = require('koa-static');
 const router = require('koa-router')();
 const swig = require('koa-swig');
 const util = require('./util');
+const request = require('request');
 const app = new koa();
 
 if (util.isProduction()) {
@@ -61,12 +62,13 @@ router.post('/publish', (req, res, next) => {
 
 router.post('/classify', (req, res, next) => {
     let API;
-    if (api[req.query.id])
-        API = api[req.query.id].url + api[req.query.id].endpoint;
+    if (api[req.params.id])
+        API = api[req.params.id].url + api[req.params.id].endpoint;
     else
         API = AI_VISION_API;
 
-    req.pipe(request.post(API, { strictSSL: false })).pipe(res);
+    req.body = req.req.pipe(request.post(API, { strictSSL: false }));
+
 });
 
 app

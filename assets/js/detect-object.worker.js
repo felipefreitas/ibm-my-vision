@@ -1,20 +1,8 @@
-global.Module = {
-    locateFile: (path) => {
-        const url = `/opencv/${path}`;
-        console.log(`⬇️ Downloading wasm from ${url}`);
-        return url;
-    }
-};
-
-const cv = require('./opencv.js');
 const AI_VISION_URL = '/classify';
 const DASHBOARD_API_URL = '/publish';
 const RECOGNITION_THRESHOLD = 0.980;
 
-cv.onRuntimeInitialized = async () => {
-    log('📦 OpenCV wasm runtime loaded');
-    init();
-};
+init();
 
 async function init() {
     self.postMessage({ type: 'detector-inited' });
@@ -71,15 +59,32 @@ function dataUriToBlob(dataURI) {
 };
 
 function requestToAIVision(formData, code) {
-    return axios({
-        method: 'POST',
-        url: AI_VISION_URL + "?id=" + code,
-        data: formData
-    }).then(response => { return response.data; })
-        .then(result => {
-            let objects = onSearchSuccess(result, code);
+    let request = new XMLHttpRequest();
+    let url = AI_VISION_URL;
+
+    if(code){
+        url = url + "?id=" + code
+    }
+
+    request.open('POST', url, true);
+    request.onreadystatechange = (response) => {
+        if(request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+			let objects = onSearchSuccess(response.body, code);
             return objects;
-        });
+		}	
+    };
+
+    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    request.send(formData);
+    // return axios({
+    //     method: 'POST',
+    //     url: AI_VISION_URL + "?id=" + code,
+    //     data: formData
+    // }).then(response => { return response.data; })
+    //     .then(result => {
+    //         let objects = onSearchSuccess(result, code);
+    //         return objects;
+    //     });
 };
 
 function onSearchSuccess(result, code) {
@@ -109,7 +114,7 @@ function addObjectRecognized(objects) {
             objectsRecognized.push(object);
         }
     }
-    
+
     return objectsRecognized;
 };
 

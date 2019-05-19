@@ -8,10 +8,12 @@ global.Module = {
 
 const cv = require('./opencv.js');
 
-let frame = null;
 let HSV = null;
 let HSVVector = null;
 let terminationCriteria = null;
+let objectsTracked = [];
+let width = 0;
+let height = 0;
 
 cv.onRuntimeInitialized = async () => {
     console.log('📦 OpenCV wasm runtime loaded');
@@ -24,21 +26,29 @@ function init() {
     self.addEventListener('message', ({ data }) => {
         switch (data.type) {
             case "tracker-start":
-                frame = data.frame;
-                HSV = data.HSV;
-                HSVVector = data.HSVVector;
-                terminationCriteria = data.terminationCriteria;
-                
-                const matrix = processVideo(data.matrix, []);
-                self.postMessage({ type: 'tracker-processed', matrix: matrix });
+                width = data.width;
+                height = data.height;
+                terminationCriteria = new cv.TermCriteria(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 1);
+                HSV = new cv.Mat(height, width, cv.CV_8UC3);
+                HSVVector = new cv.MatVector();
+                HSVVector.push_back(HSV);
+
+                matrix = cv.matFromImageData(data.image);
+                image = processVideo(matrix, objectsTracked);
+                self.postMessage({ type: 'tracker-processed', image });
+                self.postMessage({ type: 'tracker-new-objects-done' });
+                console.info("[WORKER] : Finished tracker-start message.")
                 break;
             case "tracker-process":
-                matrix = processVideo(data.matrix, data.objectsTracked);
-                self.postMessage({ type: 'tracker-processed', matrix: matrix });
+                matrix = cv.matFromImageData(data.imageData);
+                image = processVideo(matrix, objectsTracked);
+                self.postMessage({ type: 'tracker-processed', image });
+                console.info("[WORKER] : Finished tracker-process message.")
                 break;
             case "tracker-new-objects":
-                const objectsTracked = trackNewObjects(data.matrix, data.objectsRecognized, data.objectsTracked);
-                self.postMessage({ type: 'tracker-new-objects-done', objects: objectsTracked });
+                objectsTracked = trackNewObjects(data.matrix, data.objectsRecognized);
+                self.postMessage({ type: 'tracker-new-objects-done' });
+                console.info("[WORKER] : Finished tracker-new-objects message.")
                 break;
         }
     });
@@ -48,7 +58,6 @@ function processVideo(matrix, objectsTracked) {
     try {
         let matrixAux = new cv.Mat();
 
-        frame.read(matrix);
         cv.cvtColor(matrix, HSV, cv.COLOR_RGBA2RGB);
         cv.cvtColor(HSV, HSV, cv.COLOR_RGB2HSV);
 
@@ -64,7 +73,9 @@ function processVideo(matrix, objectsTracked) {
             matrix = drawBoxLabel(box, matrix, object);
         }
 
-        return matrix;
+        let imageData = new ImageData(new Uint8ClampedArray(matrix.data, matrix.cols, matrix.rows), width, height);
+
+        return imageData;
     } catch (err) {
         console.error(err);
     }
@@ -82,8 +93,8 @@ function drawBoxLabel(box, matrix, object) {
     return matrix;
 };
 
-function trackNewObjects(matrix, objectsRecognized, objectsTracked) {
-    let objectsToTrack = notTracked(objectsRecognized, objectsTracked);
+function trackNewObjects(matrix, objectsRecognized) {
+    let objectsToTrack = notTracked(objectsRecognized);
 
     for (let i = 0; i < objectsToTrack.length; i++) {
         let roiHistogram = null;
@@ -125,7 +136,7 @@ function getROIObjectHistogram(frame, object) {
     return [location, roiHist];
 };
 
-function notTracked(objectsRecognized, objectsTracked) {
+function notTracked(objectsRecognized) {
     let objectsToTrack = [];
 
     if (objectsRecognized && objectsRecognized.length < 1) {
